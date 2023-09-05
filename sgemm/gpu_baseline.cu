@@ -2,7 +2,6 @@
 #include <vector>
 #include <iostream>
 #include <chrono>
-// #include <argparse/argparse.hpp>
 
 using std::vector;
 
@@ -16,47 +15,28 @@ using std::vector;
  * @param N number of column in C
  * @param K number of row in B or column in A
  */
-void cpu_sgemm(float *C, const float *A, const float *B,
+__kernel__ gpu_baseline_sgemm(float *C, const float *A, const float *B,
   const size_t M, const size_t N, const size_t K)
 {
-  for (size_t m = 0; m < M; m++)
-  {
-    for (size_t n = 0; n < N; n++)
+    int row = threadIdx.x + blockDim.x * blockIdx.x;
+    int col = threadIdx.y + blockDim.y * blockIdx.y;
+
+    // if out of bound of matrix C
+    if ((indexX >= M) || (indexY >= N)
+      return;
+
+    // each thread responsible for getting its own elements of A & B directly
+    // from global memory
+    float acc = 0.0;
+    for (int i = 0; i < K; i++)
     {
-      float acc = 0.0;
-      for (size_t k = 0; k < K; k++)
-      {
-        acc += A[m * K + k] * B[k * N + n];
-      }
-      C[m*N + n] = acc;
+      acc += A[row*K + i] * B[i*K + col];
     }
-  }
+    C[row*N + col] = acc;
 }
 
 int main()
 {
-  // argparse::ArgumentParser program("cpu_sgemm");
-  // program.add_argument("M")
-  //   .help("row dimension of resulting matrix C")
-  //   .scan<'i', int>();
-  // program.add_argument("N")
-  //   .help("col dimension of resulting matrix C")
-  //   .scan<'i', int>();
-  // program.add_argument("M")
-  //   .help("inner dimension of matrix A & B")
-  //   .scan<'i', int>();
-  // try {
-  //   program.parse_args(argc, argv);
-  // }
-  // catch (const std::runtime_error& err) {
-  //   std::cerr << err.what() << std::endl;
-  //   std::cerr << program;
-  //   return 1;
-  // }
-
-  // auto M = program.get<int>("M");
-  // auto N = program.get<int>("N");
-  // auto K = program.get<int>("K");
   int M = 1000;
   int N = 1000;
   int K = 500;
@@ -87,5 +67,4 @@ int main()
   //   }
   //   std::cout << "\n";
   // }
-
 }
