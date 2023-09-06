@@ -10,4 +10,5 @@ else()
 endif()
 
 add_executable(cpu cpu.cpp)
+add_executable(gpu_baseline gpu_baseline.cu)
 
